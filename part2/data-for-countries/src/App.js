@@ -1,30 +1,41 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+const CountryDetails = (props) => {
+  return (
+    <>
+      <h1>{props.country.name}</h1>
+      <p>capital {props.country.capital}</p>
+      <p>population {props.country.population}</p>
+      <h1>languages</h1>
+      <ul>
+        {props.country.languages.map((lang) => (
+          <li>{lang.name}</li>
+        ))}
+      </ul>
+      <img src={props.country.flag} width="200" alt="country flag" />
+    </>
+  );
+};
 const DisplayCountries = (props) => {
-  console.log(props);
+  //console.log(props);
   let len = props.countries.length;
   if (len <= 10 && len !== 1) {
     return (
       <>
-        {props.countries.map((country) => (
-          <p>{country.name}</p>
-        ))}
+        {props.countries.map((country, index) => {
+          return (
+            <>
+              <p>{country.name}</p>{" "}
+            </>
+          );
+        })}
       </>
     );
   } else if (len === 1) {
     return (
       <>
-        <h1>{props.countries[0].name}</h1>
-        <p>capital {props.countries[0].capital}</p>
-        <p>population {props.countries[0].population}</p>
-        <h1>languages</h1>
-        <ul>
-          {props.countries[0].languages.map((lang) => (
-            <li>{lang.name}</li>
-          ))}
-        </ul>
-        <img src={props.countries[0].flag} width="200" alt="country flag" />
+        <CountryDetails country={props.countries[0]} />
       </>
     );
   } else {
@@ -48,8 +59,7 @@ const App = () => {
     let c2 = filteredCountries.toLowerCase();
     return c1.includes(c2);
   });
-  //console.log(countries);
-  //console.log(fCountries);
+
   return (
     <>
       <p>find countries</p>

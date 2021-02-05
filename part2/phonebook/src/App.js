@@ -1,87 +1,92 @@
-import React, { useState } from "react";
-
-const Form = (props) => {
-  return <input onChange={props.onchange} value={props.value} />;
-};
-
-const Persons = (props) => {
-  return (
-    <>
-      {props.filteredList.map((person) => (
-        <p key={person.number}>
-          {person.name} {person.number}
-        </p>
-      ))}
-    </>
-  );
-};
+import React, { useState, useEffect } from "react";
+import { getAll, create, update } from "./dbhandler";
+import Persons from "./components/Persons";
+import Filter from "./components/Filter";
+import PersonForm from "./components/PersonForm";
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: "Arto Hellas", number: "040-123456" },
-    { name: "Ada Lovelace", number: "39-44-5323523" },
-    { name: "Dan Abramov", number: "12-43-234345" },
-    { name: "Mary Poppendieck", number: "39-23-6423122" },
-  ]);
+  const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
-  const [newNumber, setNewNumber] = useState();
-  const [filterName, setFilterName] = useState("");
-
+  const [newNumber, setNewNumber] = useState("");
+  const [filteredList, setFilteredList] = useState(persons);
+  const [filter, setFilter] = useState("");
+  useEffect(() => {
+    getAll().then((response) => setPersons(response.data));
+  }, [persons]);
   const handleChange = (event) => {
     setNewName(event.target.value);
   };
-  const numberChange = (event) => {
+  const handleNumberChange = (event) => {
     setNewNumber(event.target.value);
   };
-
-  const handleFilter = (event) => {
-    setFilterName(event.target.value);
-  };
-  const onSubmit = (event) => {
+  const handleClick = (event) => {
     event.preventDefault();
-    let res = persons.find((person) => person.name === newName);
-    let resp = persons.find((person) => person.number === newNumber);
-    if (res === undefined && resp === undefined)
-      setPersons((persons) =>
-        persons.concat({ name: newName, number: newNumber })
-      );
-    else {
-      if (res !== undefined) alert(`${newName} is already added to phonebook`);
-      else alert(`${newNumber} is already added to phonebook`);
+    let findName = persons.find((person) => person.name === newName);
+    let findNumber = persons.find((person) => person.number === newNumber);
+    if (findName === undefined && findNumber === undefined) {
+      create({ name: newName, number: newNumber });
+    } else {
+      let findId = persons.find((person) => {
+        if (person.name === newName) return person.id;
+        return null;
+      });
+      if (
+        findName !== undefined &&
+        window.confirm(
+          `${findName.name} already exists. Do you want to overwrite?`
+        )
+      ) {
+        update(findId.id, { name: newName, number: newNumber });
+      } else {
+        if (
+          window.confirm(
+            `${findNumber.number} already exists. Do you want to overwrite?`
+          )
+        ) {
+          update(findId.id, { name: newName, number: newNumber });
+        }
+      }
     }
   };
-  let filteredList = persons.filter((person) => {
-    let p1 = person.name.toLowerCase();
-    let p2 = filterName.toLowerCase();
-    return p1.includes(p2);
-  });
+  const handleFilterChange = (event) => {
+    setFilter(event.target.value);
+    if (filter !== "") {
+      setFilteredList(
+        persons.filter((person) => {
+          let p1 = person.name.toLowerCase();
+          let p2 = filter.toLowerCase();
+          return p1.includes(p2);
+        })
+      );
+    }
+  };
 
   return (
-    <div>
+    <>
       <h2>Phonebook</h2>
-      <form>
-        <div>
-          <p>
-            Filter shown with
-            <Form onchange={handleFilter} value={filterName} />
-          </p>
-          <h1>Add a new contact</h1>
-          <p>
-            name: <Form onchange={handleChange} value={newName} />
-          </p>
-          <p>
-            number: <Form onchange={numberChange} value={newNumber} />
-          </p>
-        </div>
-        <div>
-          <button onClick={onSubmit} type="submit">
-            add
-          </button>
-        </div>
-      </form>
+      <div>
+        <Filter onc={handleFilterChange} val={filter} />
+        <h2>add a new</h2>
+        <PersonForm name="name" onChange={handleChange} value={newName} />
+        <PersonForm
+          name="number"
+          onChange={handleNumberChange}
+          value={newNumber}
+        />
+      </div>
+      <div>
+        <button onClick={handleClick} type="submit">
+          add
+        </button>
+      </div>
       <h2>Numbers</h2>
-      <Persons filteredList={filteredList} />
-    </div>
+      <Persons
+        filteredList={filteredList}
+        persons={persons}
+        setPersons={setPersons}
+        filter={filter}
+      />
+    </>
   );
 };
 
